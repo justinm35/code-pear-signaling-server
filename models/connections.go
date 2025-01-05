@@ -25,14 +25,27 @@ type Connection struct {
 		CreatedAt				time.Time 
 }
 
-func GetConnectionByAccessKey(accessKey string) Connection {
-	db := establishDbConn()
-	defer db.Close()
+var db *sql.DB
 
+func init() {
+	var err error
+	db, err = sql.Open("sqlite", "my-database.db")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if db == nil {
+		fmt.Println("Databse connection is nil")
+	}
+}
+
+func GetConnectionByAccessKey(accessKey string) Connection {
 	rows, err := db.Query("SELECT * FROM connections WHERE access_key = ?;", accessKey)
 	if err != nil {
 		fmt.Println(err)
 	}
+	defer rows.Close()
 
 	var firstRow Connection
 
@@ -43,10 +56,14 @@ func GetConnectionByAccessKey(accessKey string) Connection {
 	return firstRow
 }
 
-func InsertConnectionRecord(newConnection Connection) {
-	db := establishDbConn()
-	defer db.Close()
+func UpdateConnectionRecordByAccessKey(accessKey string, sdpAccept string) {
+	_, err := db.Exec("UPDATE connections set accept_client_sdp = ? WHERE access_key = ?", sdpAccept , accessKey)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
 
+func InsertConnectionRecord(newConnection Connection) {
 	_ , err := db.Exec(
 		"INSERT INTO connections (offer_client_sdp, accept_client_sdp, access_key) VALUES  (?, ?, ?)",
 		newConnection.OfferClientSdp, newConnection.AcceptClientSdp, newConnection.AccessKey,
@@ -54,15 +71,4 @@ func InsertConnectionRecord(newConnection Connection) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	
-}
-
-func establishDbConn() *sql.DB {
-
-	db, err:= sql.Open("sqlite", "my-database.db")
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	return db
 }
