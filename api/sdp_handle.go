@@ -18,7 +18,7 @@ func Serve() {
 	router.GET("/accept_get_sdp", acceptGetSdp)
 	router.POST("/accept_provide_sdp", acceptProvideSdp)
 
-	router.Run("localhost:8080")
+	router.Run("0.0.0.0:4000")
 }
 
 func logRandomMessage(c *gin.Context) {
